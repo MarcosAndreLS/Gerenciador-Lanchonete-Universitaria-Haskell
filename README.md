@@ -1,1 +1,0 @@
-# Gerenciado-de-Pedidos-da-Lanchonete-Universetaria-Haskell
