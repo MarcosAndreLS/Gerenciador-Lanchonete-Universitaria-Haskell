@@ -159,33 +159,54 @@ coletarItens itens total = do
         let novoTotal = total + preco -- Atualiza o total com o preço do novo item
         coletarItens novosItens novoTotal  -- Chama a função novamente para continuar coletando itens
 
--- Finaliza o pedido, gerando um ID e adicionando-o à lista de pedidos
+-- Função que finaliza o pedido, gerando um ID único e adicionando o pedido à lista de pedidos.
+-- Parâmetros:
+--   - itens: Lista de tuplas representando os itens do pedido. Cada tupla contém o nome do item (String) e seu preço (Double).
 finalizarPedido :: [(String, Double)] -> IO ()
 finalizarPedido itens = do
+    -- Verifica se a lista de itens está vazia.
     if null itens
+        -- Caso a lista esteja vazia, exibe uma mensagem informando que o pedido não foi realizado.
         then putStrLn "\nVocê não selecionou nenhum item. Pedido não realizado."
+        -- Caso contrário, prossegue com a finalização do pedido.
         else do
+            -- Gera um ID único para o pedido.
             idPedido <- gerarIdPedido
-            let novoPedido = Pedido idPedido itens 1 (sum (map snd itens))  -- Passa o total calculado
+            -- Cria um novo pedido utilizando os itens fornecidos. O total é calculado somando os preços dos itens.
+            let novoPedido = Pedido idPedido itens 1 (sum (map snd itens))
+            -- Adiciona o novo pedido à lista de pedidos.
             adicionarPedido novoPedido
+            -- Exibe uma mensagem de sucesso para o usuário.
             putStrLn "\nPedido realizado com sucesso!"
+            -- Exibe um resumo do pedido para o usuário, incluindo os itens selecionados.
             putStrLn $ "Resumo do pedido:\n" ++ resumoPedido itens
 
 -- Visualiza detalhes de um pedido específico pelo ID
 verPedidoID :: IO ()
 verPedidoID = do
+    -- Solicita ao usuário o ID do pedido que deseja visualizar.
     putStrLn "\nDigite o ID do seu pedido para visualizar:"
     pedidoIdInput <- getLine
-    let pedidoIdBusca = read pedidoIdInput :: Int  -- Converte o input para um inteiro
+    -- Converte a entrada do usuário (String) para um número inteiro (Int).
+    let pedidoIdBusca = read pedidoIdInput :: Int
+    -- Lê a lista de pedidos armazenada na referência de IO (pedidos).
     lista <- readIORef pedidos
+    -- Filtra os pedidos na lista para encontrar aquele com o ID especificado.
     let pedidoEncontrado = filter (\p -> pedidoId p == pedidoIdBusca) lista
+    -- Verifica se o pedido foi encontrado.
     if null pedidoEncontrado
+        -- Caso o pedido não seja encontrado, exibe uma mensagem informando o usuário.
         then putStrLn "\nPedido não encontrado."
+        -- Caso o pedido seja encontrado, exibe seus detalhes.
         else do
             putStrLn "\nPedido Encontrado:"
+            -- Itera sobre os pedidos encontrados (em teoria, apenas um) e exibe suas informações.
             mapM_ (\(Pedido pid itens status total) -> do
+                -- Exibe o ID do pedido.
                 putStrLn $ "Pedido ID: " ++ show pid
+                -- Exibe um resumo dos itens no pedido.
                 putStrLn $ resumoPedido itens
+                -- Exibe o status do pedido, indicando se está pendente ou sendo entregue.
                 putStrLn $ "Status: " ++ if status == 1 
                     then "Pedido pendente." 
                     else "Pedido está sendo entregue."
@@ -194,59 +215,37 @@ verPedidoID = do
 -- Exclui um pedido com base no ID, se ele ainda estiver pendente
 excluirPedido :: IO ()
 excluirPedido = do
+    -- Solicita ao usuário o ID do pedido que deseja excluir.
     putStrLn "\nDigite o ID do pedido que deseja excluir:"
     inputId <- getLine
+    -- Converte a entrada do usuário (String) para um número inteiro (Int).
     let idProcurado = read inputId :: Int
+    -- Lê a lista atual de pedidos da referência de IO (pedidos).
     lista <- readIORef pedidos
+    -- Filtra a lista de pedidos para encontrar o pedido correspondente ao ID fornecido
     let pedidoEncontrado = filter (\p -> pedidoId p == idProcurado) lista
+    -- Verifica se o pedido foi encontrado.
     if null pedidoEncontrado
+        -- Caso o pedido não seja encontrado, exibe uma mensagem informando o usuário.
         then putStrLn "\nPedido não encontrado."
+        -- Caso o pedido seja encontrado, realiza verificações adicionais.
         else do
+            -- Obtém o pedido encontrado (assume que há apenas um pedido com o ID fornecido).
             let pedido = head pedidoEncontrado
+            -- Verifica o status do pedido. Apenas pedidos pendentes (status == 1) podem ser excluídos.
             if status pedido /= 1
+                -- Exibe uma mensagem informando que apenas pedidos pendentes podem ser excluídos.
                 then putStrLn "\nApenas pedidos com status '1' (pendentes) podem ser excluídos."
+                -- Exclui o pedido caso ele seja pendente.
                 else do
+                    -- Cria uma nova lista de pedidos, excluindo o pedido correspondente ao ID.
                     let resto = filter (\p -> pedidoId p /= idProcurado) lista
+                    -- Atualiza a referência de IO (pedidos) com a lista filtrada.
                     writeIORef pedidos resto
+                    -- Exibe uma mensagem de sucesso para o usuário.
                     putStrLn "\nPedido excluído com sucesso!"
+                    -- Exibe um resumo do pedido excluído.
                     putStrLn $ "Resumo do pedido excluído:\n" ++ resumoPedido (comidas pedido)
-
--- Placeholder para funcionalidades específicas do administrador
-
--- Lista todos os pedidos filtrados por status (pendente ou entregue)
-listarPedidosPorStatus :: Int -> IO ()
-listarPedidosPorStatus statusProcurado = do
-    lista <- readIORef pedidos
-    let filtrados = filter (\p -> status p == statusProcurado) lista
-    if null filtrados
-        then putStrLn "\nNão há pedidos no momento."
-        else do
-            let nomeStatus = if statusProcurado == 1 then "Pendentes" else "Entregues"
-            putStrLn $ "\nPedidos " ++ nomeStatus
-            mapM_ (\pedido -> do
-                putStrLn $ "Pedido ID: " ++ show (pedidoId pedido)
-                putStrLn $ resumoPedido (comidas pedido)
-                putStrLn "---------------------------") filtrados
-
--- Atualiza o status de um pedido para "entregue" (status = 0)
-mudarStatusPedido :: IO ()
-mudarStatusPedido = do
-    putStrLn "\nDigite o ID do pedido que deseja marcar como entregue:"
-    inputId <- getLine
-    let pedidoIdEscolhido = read inputId :: Int
-    lista <- readIORef pedidos
-    let pedidoAtualizado = map (atualizarStatus pedidoIdEscolhido) lista
-    if any (\p -> pedidoId p == pedidoIdEscolhido && status p == 1) lista
-        then do
-            writeIORef pedidos pedidoAtualizado
-            putStrLn "\nStatus do pedido atualizado para entregue com sucesso!"
-        else putStrLn "\nPedido não encontrado ou já está entregue."
-  where
-    -- Função auxiliar para atualizar o status de um pedido específico
-    atualizarStatus :: Int -> Pedido -> Pedido
-    atualizarStatus pid pedido
-        | pedidoId pedido == pid = pedido { status = 0 }
-        | otherwise = pedido
 
 -- Lista todos os pedidos cadastrados
 listarTodosPedidos :: IO ()
@@ -266,6 +265,67 @@ listarTodosPedidos = do
                     0 -> "Entregue"
                     _ -> "Desconhecido"
                 putStrLn "---------------------------") lista
+
+-- Placeholder para funcionalidades específicas do administrador
+
+-- Lista todos os pedidos filtrados por status (pendente ou entregue)
+listarPedidosPorStatus :: Int -> IO ()
+listarPedidosPorStatus statusProcurado = do
+    -- Lê a lista de pedidos armazenada em 'pedidos'.
+    lista <- readIORef pedidos
+    -- Filtra os pedidos cujo status corresponde ao 'statusProcurado'.
+    let filtrados = filter (\p -> status p == statusProcurado) lista
+    -- Verifica se há pedidos correspondentes.
+    if null filtrados
+        then -- Se não houver pedidos, exibe uma mensagem informativa.
+            putStrLn "\nNão há pedidos no momento."
+        else do
+            -- Define o nome do status para exibição (Pendentes ou Entregues).
+            let nomeStatus = if statusProcurado == 1 then "Pendentes" else "Entregues"
+            -- Exibe o cabeçalho indicando o status dos pedidos listados.
+            putStrLn $ "\nPedidos " ++ nomeStatus
+            -- Para cada pedido filtrado, exibe os detalhes relevantes.
+            mapM_ (\pedido -> do
+                putStrLn $ "Pedido ID: " ++ show (pedidoId pedido) -- Exibe o ID do pedido.
+                putStrLn $ resumoPedido (comidas pedido)          -- Exibe o resumo das comidas.
+                putStrLn "---------------------------"            -- Adiciona uma separação visual.
+                ) filtrados
+
+-- Atualiza o status de um pedido para "entregue" (status = 0)
+mudarStatusPedido :: IO ()
+mudarStatusPedido = do
+    -- Solicita ao usuário o ID do pedido que deseja marcar como entregue.
+    putStrLn "\nDigite o ID do pedido que deseja marcar como entregue:"
+    inputId <- getLine
+    -- Converte a entrada do usuário (String) para um número inteiro (Int).
+    let pedidoIdEscolhido = read inputId :: Int
+    -- Lê a lista de pedidos da referência de IO (pedidos).
+    lista <- readIORef pedidos
+    -- Cria uma nova lista de pedidos com o status atualizado para o ID especificado.
+    let pedidoAtualizado = map (atualizarStatus pedidoIdEscolhido) lista
+    -- Verifica se existe um pedido com o ID fornecido e se ele está com o status pendente.
+    if any (\p -> pedidoId p == pedidoIdEscolhido && status p == 1) lista
+        -- Se o pedido for encontrado e estiver pendente, atualiza o status na referência de IO.
+        then do
+            writeIORef pedidos pedidoAtualizado
+            -- Exibe uma mensagem de sucesso para o usuário.
+            putStrLn "\nStatus do pedido atualizado para entregue com sucesso!"
+        -- Caso contrário, exibe uma mensagem informando que o pedido não foi encontrado ou já está entregue.
+        else putStrLn "\nPedido não encontrado ou já está entregue."
+  where
+    -- Função auxiliar para atualizar o status de um pedido específico.
+    -- Parâmetros:
+    --   - pid: ID do pedido que será atualizado.
+    --   - pedido: Pedido atual a ser verificado e possivelmente modificado.
+    -- Retorna:
+    --   - Um pedido com o status alterado para 0 (entregue), caso o ID corresponda.
+    --   - O pedido original caso o ID não corresponda.
+    atualizarStatus :: Int -> Pedido -> Pedido
+    atualizarStatus pid pedido
+        -- Atualiza o status se o ID do pedido corresponder ao ID fornecido.
+        | pedidoId pedido == pid = pedido { status = 0 }
+        -- Mantém o pedido inalterado caso o ID não corresponda.
+        | otherwise = pedido
 
 -- Função que calcula e exibe o faturamento total dos pedidos entregues.
 verFaturamento :: IO ()

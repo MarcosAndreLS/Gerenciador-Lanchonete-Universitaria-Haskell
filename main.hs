@@ -24,4 +24,3 @@ processarOpcao "3" = putStrLn "\nObrigado por visitar a Universitária da Ismên
 processarOpcao _   = do
     putStrLn "\nOpção inválida. Por favor, tente novamente."
     main
-
