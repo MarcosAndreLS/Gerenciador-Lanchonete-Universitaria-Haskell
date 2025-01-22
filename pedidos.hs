@@ -292,4 +292,3 @@ gravarPedidosEntregues = do
             -- Escreve o conteúdo no arquivo especificado.
             writeFile nomeArquivo content
             putStrLn $ "Pedidos entregues salvos em '" ++ nomeArquivo ++ "'."
-    
