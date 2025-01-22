@@ -25,6 +25,7 @@ menuAdministrador = do
     putStrLn "2 - Mudar Status do Pedido para Entregue"
     putStrLn "3 - Ver Pedidos Entregues"
     putStrLn "4 - Ver Faturamento"
+    putStrLn "5 - Gravar Pedidos Entregues"
     putStrLn "7 - Voltar"
     opcao <- getLine
     processarOpcaoAdministrador opcao
@@ -35,6 +36,7 @@ processarOpcaoAdministrador "1" = listarPedidosPorStatus 1 >> menuAdministrador 
 processarOpcaoAdministrador "2" = mudarStatusPedido >> menuAdministrador  -- Altera o status de um pedido para "entregue"
 processarOpcaoAdministrador "3" = listarPedidosPorStatus 0 >> menuAdministrador -- Lista pedidos entregues
 processarOpcaoAdministrador "4" = verFaturamento >> menuAdministrador -- Mostra o faturamento total
+processarOpcaoAdministrador "5" = gravarPedidosEntregues >> menuAdministrador -- Grava todos os pedidos entregues em um arquivo .txt
 processarOpcaoAdministrador "7" = return () -- Retorna ao menu principal
 processarOpcaoAdministrador _   = do
     putStrLn "\nOpção inválida. Por favor, tente novamente."

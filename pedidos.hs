@@ -4,7 +4,7 @@ module Pedidos where
 import Cardapio
 import System.IO
 import Data.List (intercalate)
-import Data.IORef -- Import necessário para IORef
+import Data.IORef
 import System.IO.Unsafe (unsafePerformIO) -- Para inicializar a variável global 
 
 -- Tipo para representar um pedido
@@ -267,3 +267,29 @@ verFaturamento = do
             let faturamentoTotal = sum (map valorTotal pedidosEntregues)
             -- Exibe o faturamento total dos pedidos entregues.
             putStrLn $ "\nFaturamento Total dos pedidos entregues: R$ " ++ show faturamentoTotal
+
+-- Função que grava os pedidos entregues em um arquivo.
+gravarPedidosEntregues :: IO ()
+gravarPedidosEntregues = do
+    -- Lê a lista de pedidos armazenada em uma referência IORef.
+    lista <- readIORef pedidos
+    -- Filtra apenas os pedidos que estão entregues (com status igual a 0).
+    let entregues = filter (\p -> status p == 0) lista
+    -- Verifica se a lista de entregas está vazia
+    if null entregues
+        then putStrLn "\nNão há pedidos entregues no momento."
+        else do
+            -- Solicita ao usuário o nome do arquivo onde os pedidos serão salvos.
+            putStrLn "Informe o nome do arquivo onde deseja salvar os pedidos entregues:"
+            arquivo <- getLine
+            -- Garante que o nome do arquivo tenha a extensão `.txt`, caso o usuário não forneça.
+            let nomeArquivo = if ".txt" `elem` words arquivo
+                              then arquivo
+                              else arquivo ++ ".txt"
+            -- Cria o conteúdo a ser salvo, concatenando informações de cada pedido.
+            let content = unlines $ map (\pedido -> 
+                    "Pedido ID: " ++ show (pedidoId pedido) ++ "\n" ++ resumoPedido (comidas pedido) ++ "\n" ++ replicate 20 '-' ++ "\n") entregues
+            -- Escreve o conteúdo no arquivo especificado.
+            writeFile nomeArquivo content
+            putStrLn $ "Pedidos entregues salvos em '" ++ nomeArquivo ++ "'."
+    
