@@ -53,12 +53,15 @@ fazerPedido = do
 -- Coleta itens escolhidos pelo cliente e atualiza a lista e o total acumulado
 coletarItens :: [(String, Double)] -> Double -> IO ()
 coletarItens itens total = do
+    -- Exibe o cardápio de opções ao usuário.
     verCardapio
+    -- Opções do menu para o usuário escolher
     putStrLn "11 - finalizar"
     putStrLn "12 - ver itens que já foram adicionados e preço"
     putStrLn "\nDigite o número do item:"
     opcao <- getLine
     case opcao of
+        -- Opção para adicionar hambúrgueres.
         "1" -> do
             verHamburgueres
             putStrLn "Escolha o sabor do Hambúrguer:"
@@ -71,9 +74,10 @@ coletarItens itens total = do
                 _ -> do
                     putStrLn "Opção inválida. Por favor, tente novamente."
                     coletarItens itens total
+        -- Opção para adicionar pizzas.
         "2" -> do
-            putStrLn "Escolha o sabor da Pizza:"
             verPizzas
+            putStrLn "Escolha o sabor da Pizza:"
             sabor <- getLine
             case sabor of
                 "1" -> registrarItem ("Pizza Mexicana", 50.0)
@@ -83,9 +87,10 @@ coletarItens itens total = do
                 _ -> do
                     putStrLn "Opção inválida. Por favor, tente novamente."
                     coletarItens itens total
+        -- Opção para adicionar coxinhas.
         "3" -> do
-            putStrLn "Escolha o sabor da Coxinha:"
             verCoxinhas
+            putStrLn "Escolha o sabor da Coxinha:"
             sabor <- getLine
             case sabor of
                 "1" -> registrarItem ("Coxinha Frango", 3.0)
@@ -95,8 +100,11 @@ coletarItens itens total = do
                 _ -> do
                     putStrLn "Opção inválida. Por favor, tente novamente."
                     coletarItens itens total
+        -- Opção para adicionar bombas.
         "4" -> registrarItem ("Bomba", 3.0)
+        -- Opção para adicionar pastéis.
         "5" -> do
+            verPasteis
             putStrLn "Escolha o sabor do Pastel:"
             verPasteis
             sabor <- getLine
@@ -108,13 +116,18 @@ coletarItens itens total = do
                 _ -> do
                     putStrLn "Opção inválida. Por favor, tente novamente."
                     coletarItens itens total
+        -- Opção para adicionar salsichão.
         "6" -> registrarItem ("Salsichão", 3.0)
+        -- Opção para adicionar refrigerantes.
         "7" -> registrarItem ("Refrigerante", 8.0)
+        -- Opção para adicionar água mineral.
         "8" -> registrarItem ("Água Mineral", 2.0)
+        -- Opção para adicionar água de coco.
         "9" -> registrarItem ("Água de Coco", 4.0)
+        -- Opção para adicionar cervejas.
         "10" -> do
-            putStrLn "Escolha o tipo de Cerveja:"
             verCervejas
+            putStrLn "Escolha o tipo de Cerveja:"
             sabor <- getLine
             case sabor of
                 "1" -> registrarItem ("Heineken Long Neck", 6.0)
@@ -128,22 +141,23 @@ coletarItens itens total = do
                 _ -> do
                     putStrLn "Opção inválida. Por favor, tente novamente."
                     coletarItens itens total
+        -- Opção para finalizar o pedido.
         "11" -> finalizarPedido itens
+        -- Opção para ver os itens adicionados e o total acumulado.
         "12" -> do
             putStrLn "\nItens adicionados até agora:"
-            -- Exibir cada item com seu preço
-            mapM_ (\(nome, preco) -> putStrLn $ nome ++ " - R$ " ++ show preco) itens
-            -- Exibir o total acumulado
-            putStrLn $ "\nTotal até agora: R$ " ++ show total
+            putStrLn $ resumoPedido itens  -- Reaproveitar a função `resumoPedido`
             coletarItens itens total
+        -- Caso o usuário insira uma opção inválida.
         _ -> do
             putStrLn "Opção inválida. Por favor, tente novamente."
             coletarItens itens total
   where
+    -- Função que registra o item selecionado no pedido e atualiza o total.
     registrarItem (nome, preco) = do
-        let novosItens = itens ++ [(nome, preco)]
-        let novoTotal = total + preco
-        coletarItens novosItens novoTotal
+        let novosItens = itens ++ [(nome, preco)] -- Adiciona o novo item à lista de itens
+        let novoTotal = total + preco -- Atualiza o total com o preço do novo item
+        coletarItens novosItens novoTotal  -- Chama a função novamente para continuar coletando itens
 
 -- Finaliza o pedido, gerando um ID e adicionando-o à lista de pedidos
 finalizarPedido :: [(String, Double)] -> IO ()
